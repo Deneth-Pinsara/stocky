@@ -1,122 +1,193 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useEffect, useState } from "react";
+import "./App.css";
+import type { Product } from "./types/product";
+import axios from "axios";
+
+const BASE_URL = import.meta.env.VITE_API_URL;
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [products, setProducts] = useState<Product[]>([]);
+  const [refresh, setRefresh] = useState<boolean>(false);
+  const [count, setCount] = useState<number>(0);
+  const [newProduct, setNewProduct] = useState<Product>({
+    id: 0,
+    name: "",
+    sku: "",
+    description: null,
+    price: "15000",
+    quantity: 0,
+    created_at: "",
+    updated_at: "",
+  });
+  const [updateProduct, setUpdateProduct] = useState<Product>({
+    id: 0,
+    name: "",
+    sku: "",
+    description: null,
+    price: "15000",
+    quantity: 0,
+    created_at: "",
+    updated_at: "",
+  });
+
+  async function GetProducts() {
+    const ApiResponse = await axios.get(`${BASE_URL}/products`);
+    setProducts(ApiResponse?.data?.data);
+    // console.log(ApiResponse.data.data);
+  }
+
+  async function CreateProduct() {
+    const response = await axios.post(
+      `${BASE_URL}/products/create`,
+      newProduct,
+    );
+    console.log(response);
+    setRefresh((prev) => !prev);
+  }
+
+  async function UpdateProduct(id) {
+    const response = await axios.put(
+      `${BASE_URL}/products/${id}`,
+      updateProduct,
+    );
+    setRefresh((prev) => !prev);
+    console.log(response);
+  }
+
+  async function DeleteProduct(id) {
+    const response = await axios.delete(`${BASE_URL}/products/${id}`);
+    console.log(response);
+    setRefresh((prev) => !prev);
+  }
+
+  useEffect(() => {
+    GetProducts();
+  }, [refresh]);
 
   return (
     <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
+      {/* create form */}
+      <div>
+        <input
+          placeholder="name"
+          value={newProduct.name}
+          onChange={(e) =>
+            setNewProduct({ ...newProduct, name: e.target.value })
+          }
+        ></input>
+        <input
+          placeholder="sku"
+          value={newProduct.sku}
+          onChange={(e) =>
+            setNewProduct({ ...newProduct, sku: e.target.value })
+          }
+        ></input>
+        <input
+          placeholder="description"
+          value={newProduct.description}
+          onChange={(e) =>
+            setNewProduct({ ...newProduct, description: e.target.value })
+          }
+        ></input>
         <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
+          onClick={() => {
+            CreateProduct();
+          }}
         >
-          Count is {count}
+          Create
         </button>
-      </section>
+      </div>
 
-      <div className="ticks"></div>
+      {/* product table */}
+      <div>
+        <h1>Products List</h1>
+        <button
+          onClick={() => {
+            setRefresh((prev) => !prev);
+          }}
+        >
+          Refresh
+        </button>
+        <table>
+          <thead>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Sku</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Quantity</th>
+            <th>Actions</th>
+          </thead>
+          <tbody>
+            {products.map((product) => (
+              <tr key={product.id}>
+                <td>{product.id}</td>
+                <td>{product.name}</td>
+                <td>{product.sku}</td>
+                <td>{product.description}</td>
+                <td>{product.price}</td>
+                <td>{product.quantity}</td>
+                <td>
+                  <button
+                    onClick={() => {
+                      DeleteProduct(product.id);
+                    }}
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => {
+                      setUpdateProduct(product);
+                    }}
+                  >
+                    Edit
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
+      {/* update form */}
+      {updateProduct.id && (
+        <div>
+          <input
+            placeholder="name"
+            value={updateProduct.name}
+            onChange={(e) =>
+              setUpdateProduct({ ...updateProduct, name: e.target.value })
+            }
+          ></input>
+          <input
+            placeholder="sku"
+            value={updateProduct.sku}
+            onChange={(e) =>
+              setUpdateProduct({ ...updateProduct, sku: e.target.value })
+            }
+          ></input>
+          <input
+            placeholder="description"
+            value={updateProduct.description}
+            onChange={(e) =>
+              setUpdateProduct({
+                ...updateProduct,
+                description: e.target.value,
+              })
+            }
+          ></input>
+          <button
+            onClick={() => {
+              UpdateProduct(updateProduct.id);
+            }}
+          >
+            Update
+          </button>
         </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      )}
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
+      <button onClick={() => setCount((prev) => prev + 1)}>{count}</button>
     </>
-  )
+  );
 }
-
-export default App
+export default App;
