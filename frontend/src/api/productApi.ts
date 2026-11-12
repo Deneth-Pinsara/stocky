@@ -1,10 +1,8 @@
-import type { ApiResponse, Product } from "../types/product";
+import type { ApiResponse, Product, ProductInput, ProductUpdate } from "../types/product";
 
 const API_URL = import.meta.env.VITE_API_URL;
-async function apiRequest<T>(
-  endpoint: string,
-  options: RequestInit = {}
-): Promise<T> {
+
+async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     headers: {
@@ -23,8 +21,23 @@ async function apiRequest<T>(
   return result as T;
 }
 
-export async function getProducts(): Promise<Product[]> {
-  const response = await apiRequest<ApiResponse<Product[]>>("/products");
+export const getProducts = () =>
+  apiRequest<ApiResponse<Product[]>>("/products").then((r) => r.data);
 
-  return response.data;
-}
+export const getProduct = (id: number) =>
+  apiRequest<ApiResponse<Product>>(`/products/${id}`).then((r) => r.data);
+
+export const createProduct = (data: ProductInput) =>
+  apiRequest<ApiResponse<Product>>("/products/create", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }).then((r) => r.data);
+
+export const updateProduct = (id: number, data: ProductUpdate) =>
+  apiRequest<ApiResponse<Product>>(`/products/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(data),
+  }).then((r) => r.data);
+
+export const deleteProduct = (id: number) =>
+  apiRequest<ApiResponse<null>>(`/products/${id}`, { method: "DELETE" });
